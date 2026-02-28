@@ -21,19 +21,19 @@ interface ProjectCard {
 
 const STATUS_ORDER = ['ACTIVE', 'PLANNED', 'EVALUATING', 'PROPOSED', 'DELIVERED', 'ABANDONED', 'ARCHIVED'];
 const STATUS_COLORS: Record<string, string> = {
-  PROPOSED: 'bg-blue-100 text-blue-800',
-  EVALUATING: 'bg-yellow-100 text-yellow-800',
-  PLANNED: 'bg-purple-100 text-purple-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  DELIVERED: 'bg-emerald-100 text-emerald-800',
-  ABANDONED: 'bg-red-100 text-red-800',
-  ARCHIVED: 'bg-slate-100 text-slate-600',
+  PROPOSED:   'badge bg-blue-500/15 text-blue-400 border border-blue-500/20',
+  EVALUATING: 'badge bg-yellow-500/15 text-yellow-400 border border-yellow-500/20',
+  PLANNED:    'badge bg-violet-500/15 text-violet-400 border border-violet-500/20',
+  ACTIVE:     'badge bg-green-500/15 text-green-400 border border-green-500/20',
+  DELIVERED:  'badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/20',
+  ABANDONED:  'badge bg-red-500/15 text-red-400 border border-red-500/20',
+  ARCHIVED:   'badge bg-zinc-500/15 text-zinc-400 border border-zinc-500/20',
 };
 
 const HEALTH_COLORS: Record<string, string> = {
-  healthy: 'text-green-600',
-  warning: 'text-yellow-600',
-  critical: 'text-red-600',
+  healthy:  'text-green-400',
+  warning:  'text-yellow-400',
+  critical: 'text-red-400',
 };
 
 export default function ProjectBoard() {
@@ -68,67 +68,66 @@ export default function ProjectBoard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Project Board</h1>
-        <div className="flex gap-2">
-          <select
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Statuses</option>
-            {STATUS_ORDER.map(s => (
-              <option key={s} value={s}>
-                {s} ({statusCounts[s] || 0})
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          className="input"
+        >
+          <option value="">All Statuses</option>
+          {STATUS_ORDER.map(s => (
+            <option key={s} value={s}>
+              {s} ({statusCounts[s] || 0})
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading projects...</p>
+        <p className="text-sm text-zinc-500">Loading projects...</p>
       ) : projects.length === 0 ? (
-        <p className="text-sm text-slate-500">No projects found.</p>
+        <p className="text-sm text-zinc-500">No projects found.</p>
       ) : (
         Object.entries(grouped).map(([status, items]) => (
           <section key={status} className="space-y-3">
-            <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[status]}`}>
-                {status}
-              </span>
-              <span className="text-sm text-slate-500">{items.length}</span>
+            <h2 className="flex items-center gap-2.5">
+              <span className={STATUS_COLORS[status]}>{status}</span>
+              <span className="text-sm text-zinc-500">{items.length}</span>
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
               {items.map(project => (
                 <Link
                   key={project.id}
                   href={`/projects/${project.id}`}
-                  className="card block transition hover:border-slate-400"
+                  className="card card-hover block"
                 >
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold">{project.title}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-zinc-100">{project.title}</h3>
                     {project.priority.score > 0 && (
-                      <span className="text-xs text-slate-500">
-                        Priority: {project.priority.label}
+                      <span className="shrink-0 text-xs text-zinc-500">
+                        {project.priority.label}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-slate-600 line-clamp-2">{project.description}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-zinc-400">{project.description}</p>
 
                   {project.status === 'ACTIVE' && (
                     <div className="mt-3">
                       <div className="flex items-center justify-between text-xs">
-                        <span>Progress: {project.progress.percentage}%</span>
+                        <span className="text-zinc-400">Progress: {project.progress.percentage}%</span>
                         <span className={HEALTH_COLORS[project.health.status]}>
                           {project.health.status}
                         </span>
                       </div>
-                      <div className="mt-1 h-2 rounded-full bg-slate-200">
+                      <div className="mt-1.5 h-1.5 rounded-full bg-zinc-700">
                         <div
-                          className="h-2 rounded-full bg-green-500 transition-all"
-                          style={{ width: `${project.progress.percentage}%` }}
+                          className="h-1.5 rounded-full transition-all"
+                          style={{
+                            width: `${project.progress.percentage}%`,
+                            background: 'linear-gradient(to right, #6366f1, #8b5cf6)',
+                          }}
                         />
                       </div>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-zinc-500">
                         {project.progress.completedTasks}/{project.progress.totalTasks} tasks
                       </p>
                     </div>
@@ -136,13 +135,13 @@ export default function ProjectBoard() {
 
                   <div className="mt-3 flex flex-wrap gap-1">
                     {(project.tags as string[] || []).slice(0, 4).map(tag => (
-                      <span key={tag} className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                      <span key={tag} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                  <div className="mt-3 flex items-center gap-3 text-xs text-zinc-500">
                     <span>By {project.proposer.name}</span>
                     <span>{project.team.length} members</span>
                     {project.evaluationCount > 0 && <span>{project.evaluationCount} evals</span>}

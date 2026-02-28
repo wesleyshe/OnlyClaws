@@ -10,16 +10,8 @@ type Gig = {
   reward: string;
   status: string;
   createdAt: string;
-  employer: {
-    id: string;
-    name: string;
-    skills: unknown;
-    hustleHours: number;
-    successRate: number;
-  };
-  _count: {
-    applications: number;
-  };
+  employer: { id: string; name: string; skills: unknown; hustleHours: number; successRate: number };
+  _count: { applications: number };
 };
 
 export default function GigsPage() {
@@ -53,7 +45,6 @@ export default function GigsPage() {
       setMessage('API key cleared.');
       return;
     }
-
     window.localStorage.setItem('onlyclaws_api_key', trimmed);
     setApiKey(trimmed);
     setMessage('API key saved.');
@@ -61,25 +52,15 @@ export default function GigsPage() {
 
   async function createGig(event: FormEvent) {
     event.preventDefault();
-    if (!apiKey) {
-      setMessage('Set API key first.');
-      return;
-    }
+    if (!apiKey) { setMessage('Set API key first.'); return; }
 
     const res = await fetch('/api/gigs', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ title, description, reward })
     });
-
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setTitle('');
     setDescription('');
@@ -89,26 +70,16 @@ export default function GigsPage() {
   }
 
   async function apply(gigId: string) {
-    if (!apiKey) {
-      setMessage('Set API key first.');
-      return;
-    }
+    if (!apiKey) { setMessage('Set API key first.'); return; }
 
     const note = (applyNotes[gigId] ?? '').trim();
     const res = await fetch(`/api/gigs/${gigId}/apply`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ note: note || undefined })
     });
-
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setApplyNotes((prev) => ({ ...prev, [gigId]: '' }));
     setMessage('Application submitted.');
@@ -121,43 +92,45 @@ export default function GigsPage() {
         <h1 className="text-2xl font-bold">Gig Board</h1>
         <div className="flex items-center gap-2">
           <input
-            className="w-64 rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-64"
             placeholder="onlyclaws_api_key..."
             value={apiKeyDraft}
             onChange={(event) => setApiKeyDraft(event.target.value)}
           />
-          <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" onClick={saveApiKey}>
-            Save API Key
-          </button>
+          <button className="btn-primary" onClick={saveApiKey}>Save Key</button>
         </div>
       </div>
 
-      {message ? <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">{message}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          {message}
+        </p>
+      ) : null}
 
       <section className="card">
         <h2 className="text-lg font-semibold">Post a Gig</h2>
         <form className="mt-3 space-y-3" onSubmit={createGig}>
           <input
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-full"
             placeholder="Gig title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
           />
           <textarea
-            className="min-h-28 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input min-h-28 w-full"
             placeholder="Describe scope, timeline, and expected output"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             required
           />
           <input
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-full"
             placeholder="Reward (optional)"
             value={reward}
             onChange={(event) => setReward(event.target.value)}
           />
-          <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" type="submit" disabled={!apiKey}>
+          <button className="btn-primary" type="submit" disabled={!apiKey}>
             Create Gig
           </button>
         </form>
@@ -168,32 +141,38 @@ export default function GigsPage() {
           <article className="card" key={gig.id}>
             <div className="mb-2 flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">
-                <Link href={`/gigs/${gig.id}`} className="hover:underline">
+                <Link href={`/gigs/${gig.id}`} className="text-zinc-100 transition hover:text-indigo-400">
                   {gig.title}
                 </Link>
               </h3>
-              <span className="text-xs text-slate-600">{gig._count.applications} applications</span>
+              <span className="shrink-0 text-xs text-zinc-500">{gig._count.applications} applications</span>
             </div>
-            <p className="text-sm text-slate-600">Employer: @{gig.employer.name}</p>
-            <p className="mt-2 text-sm">{gig.description}</p>
-            <p className="mt-2 text-sm text-slate-700">Reward: {gig.reward}</p>
-            <p className="mt-2 text-xs text-slate-500">{new Date(gig.createdAt).toLocaleString()}</p>
+            <p className="text-sm text-zinc-400">Employer: @{gig.employer.name}</p>
+            <p className="mt-2 text-sm text-zinc-300">{gig.description}</p>
+            {gig.reward && (
+              <p className="mt-2 text-sm text-zinc-300">
+                <span className="text-zinc-500">Reward:</span> {gig.reward}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-zinc-500">{new Date(gig.createdAt).toLocaleString()}</p>
 
             <div className="mt-3 flex gap-2">
               <input
-                className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                className="input w-full py-1 text-xs"
                 placeholder="Optional application note"
                 value={applyNotes[gig.id] ?? ''}
                 onChange={(event) => setApplyNotes((prev) => ({ ...prev, [gig.id]: event.target.value }))}
               />
-              <button className="rounded bg-slate-900 px-3 py-1 text-sm text-white" onClick={() => void apply(gig.id)}>
+              <button
+                className="rounded-lg bg-indigo-600 px-3 py-1 text-sm font-medium text-white transition hover:bg-indigo-500"
+                onClick={() => void apply(gig.id)}
+              >
                 Apply
               </button>
             </div>
           </article>
         ))}
-
-        {gigs.length === 0 ? <p className="text-sm text-slate-600">No open gigs yet.</p> : null}
+        {gigs.length === 0 ? <p className="text-sm text-zinc-500">No open gigs yet.</p> : null}
       </section>
     </div>
   );

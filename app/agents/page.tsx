@@ -29,16 +29,16 @@ interface AgentCard {
 }
 
 const LIVENESS_DOT: Record<string, string> = {
-  alive: 'bg-green-400',
-  stale: 'bg-yellow-400',
-  dormant: 'bg-red-400',
+  alive:   'dot-alive',
+  stale:   'dot-stale',
+  dormant: 'dot-dormant',
 };
 
 const AVAILABILITY_COLORS: Record<string, string> = {
-  IDLE: 'text-slate-500',
-  ACTIVE: 'text-blue-600',
-  BUSY: 'text-amber-600',
-  COOLDOWN: 'text-purple-600',
+  IDLE:     'text-zinc-500',
+  ACTIVE:   'text-indigo-400',
+  BUSY:     'text-amber-400',
+  COOLDOWN: 'text-violet-400',
 };
 
 export default function AgentBoard() {
@@ -62,7 +62,7 @@ export default function AgentBoard() {
         <select
           value={sort}
           onChange={e => setSort(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="input"
         >
           <option value="activity">Sort by Activity</option>
           <option value="success">Sort by Success Rate</option>
@@ -72,64 +72,66 @@ export default function AgentBoard() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading agents...</p>
+        <p className="text-sm text-zinc-500">Loading agents...</p>
       ) : agents.length === 0 ? (
-        <p className="text-sm text-slate-500">No agents registered.</p>
+        <p className="text-sm text-zinc-500">No agents registered.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {agents.map(agent => (
             <Link
               key={agent.id}
               href={`/agents/${agent.id}`}
-              className="card block transition hover:border-slate-400"
+              className="card card-hover block"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${LIVENESS_DOT[agent.liveness]}`} />
-                  <h3 className="font-semibold">{agent.name}</h3>
+                  <span className={LIVENESS_DOT[agent.liveness]} />
+                  <h3 className="font-semibold text-zinc-100">{agent.name}</h3>
                 </div>
                 <span className={`text-xs font-medium ${AVAILABILITY_COLORS[agent.availability]}`}>
                   {agent.availability}
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-slate-500 capitalize">
+              <p className="mt-1 text-xs capitalize text-zinc-500">
                 {agent.primaryRole}
                 {agent.specialization && ` / ${agent.specialization}`}
               </p>
 
-              {agent.bio && <p className="mt-2 text-xs text-slate-600 line-clamp-2">{agent.bio}</p>}
+              {agent.bio && (
+                <p className="mt-2 line-clamp-2 text-xs text-zinc-400">{agent.bio}</p>
+              )}
 
-              {/* Top Skills */}
               {agent.skills.length > 0 && (
-                <div className="mt-3 space-y-1">
+                <div className="mt-3 space-y-1.5">
                   {agent.skills.slice(0, 3).map(s => (
                     <div key={s.skill} className="flex items-center gap-2">
-                      <span className="w-20 truncate text-xs text-slate-600">{s.skill}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-slate-200">
+                      <span className="w-20 truncate text-xs text-zinc-400">{s.skill}</span>
+                      <div className="h-1.5 flex-1 rounded-full bg-zinc-700">
                         <div
-                          className="h-1.5 rounded-full bg-blue-500"
-                          style={{ width: `${Math.round(s.level * 100)}%` }}
+                          className="h-1.5 rounded-full"
+                          style={{
+                            width: `${Math.round(s.level * 100)}%`,
+                            background: 'linear-gradient(to right, #6366f1, #8b5cf6)',
+                          }}
                         />
                       </div>
-                      <span className="text-xs text-slate-400">{Math.round(s.level * 100)}%</span>
+                      <span className="text-xs text-zinc-500">{Math.round(s.level * 100)}%</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Stats */}
-              <div className="mt-3 flex gap-3 text-xs text-slate-500">
+              <div className="mt-3 flex gap-3 text-xs text-zinc-500">
                 <span>{agent.stats.tasksCompleted} tasks</span>
                 <span>{agent.stats.successRate}% success</span>
                 <span>{agent.stats.projectsDelivered} delivered</span>
               </div>
 
-              {/* Active Projects */}
               {agent.activeProjects.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {agent.activeProjects.map(p => (
-                    <span key={p.id} className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    <span key={p.id} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                       {p.title}
                     </span>
                   ))}

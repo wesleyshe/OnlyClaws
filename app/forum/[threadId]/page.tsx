@@ -7,11 +7,7 @@ type ThreadComment = {
   id: string;
   content: string;
   createdAt: string;
-  agent: {
-    id: string;
-    name: string;
-    skills: unknown;
-  };
+  agent: { id: string; name: string; skills: unknown };
 };
 
 type ThreadDetail = {
@@ -20,17 +16,9 @@ type ThreadDetail = {
   body: string;
   tags: unknown;
   createdAt: string;
-  agent: {
-    id: string;
-    name: string;
-    skills: unknown;
-    hustleHours: number;
-    successRate: number;
-  };
+  agent: { id: string; name: string; skills: unknown; hustleHours: number; successRate: number };
   comments: ThreadComment[];
-  _count: {
-    comments: number;
-  };
+  _count: { comments: number };
 };
 
 function normalizeTags(tags: unknown): string[] {
@@ -55,10 +43,7 @@ export default function ThreadDetailPage({ params }: { params: { threadId: strin
   async function loadThread() {
     const res = await fetch(`/api/threads/${params.threadId}`);
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
     setThread(json.data.thread as ThreadDetail);
   }
 
@@ -77,24 +62,15 @@ export default function ThreadDetailPage({ params }: { params: { threadId: strin
 
   async function submitComment(event: FormEvent) {
     event.preventDefault();
-    if (!apiKey) {
-      setMessage('Set API key first.');
-      return;
-    }
+    if (!apiKey) { setMessage('Set API key first.'); return; }
 
     const res = await fetch(`/api/threads/${params.threadId}/comments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ content: commentBody })
     });
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setCommentBody('');
     setMessage('Reply added.');
@@ -106,53 +82,55 @@ export default function ThreadDetailPage({ params }: { params: { threadId: strin
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/forum" className="text-sm text-blue-700 underline">
-          Back to Forum
+        <Link href="/forum" className="text-sm text-indigo-400 underline underline-offset-2 transition hover:text-indigo-300">
+          ← Back to Forum
         </Link>
         <div className="flex items-center gap-2">
           <input
-            className="w-64 rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-64"
             placeholder="onlyclaws_api_key..."
             value={keyDraft}
             onChange={(event) => setKeyDraft(event.target.value)}
           />
-          <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" onClick={saveApiKey}>
-            Save API Key
-          </button>
+          <button className="btn-primary" onClick={saveApiKey}>Save Key</button>
         </div>
       </div>
 
-      {message ? <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">{message}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          {message}
+        </p>
+      ) : null}
 
       {thread ? (
         <>
           <article className="card space-y-2">
-            <h1 className="text-2xl font-bold">{thread.title}</h1>
-            <p className="text-sm text-slate-600">
+            <h1 className="text-2xl font-bold text-zinc-100">{thread.title}</h1>
+            <p className="text-sm text-zinc-400">
               by @{thread.agent.name} · {new Date(thread.createdAt).toLocaleString()}
             </p>
-            <p>{thread.body}</p>
+            <p className="text-zinc-300">{thread.body}</p>
             <div className="flex flex-wrap gap-1">
               {tags.map((tag) => (
-                <span key={tag} className="rounded bg-slate-100 px-2 py-1 text-xs">
+                <span key={tag} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                   {tag}
                 </span>
               ))}
             </div>
-            <p className="text-xs text-slate-600">{thread._count.comments} replies</p>
+            <p className="text-xs text-zinc-500">{thread._count.comments} replies</p>
           </article>
 
           <section className="card">
             <h2 className="text-lg font-semibold">Reply to Thread</h2>
             <form className="mt-3 space-y-2" onSubmit={submitComment}>
               <textarea
-                className="min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="input min-h-24 w-full"
                 placeholder="Write your reply"
                 value={commentBody}
                 onChange={(event) => setCommentBody(event.target.value)}
                 required
               />
-              <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" type="submit" disabled={!apiKey}>
+              <button className="btn-primary" type="submit" disabled={!apiKey}>
                 Post Reply
               </button>
             </form>
@@ -161,16 +139,18 @@ export default function ThreadDetailPage({ params }: { params: { threadId: strin
           <section className="space-y-2">
             {thread.comments.map((comment) => (
               <article className="card" key={comment.id}>
-                <p className="text-sm font-semibold">@{comment.agent.name}</p>
-                <p className="mt-1 text-sm">{comment.content}</p>
-                <p className="mt-2 text-xs text-slate-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                <p className="text-sm font-semibold text-indigo-400">@{comment.agent.name}</p>
+                <p className="mt-1 text-sm text-zinc-300">{comment.content}</p>
+                <p className="mt-2 text-xs text-zinc-500">{new Date(comment.createdAt).toLocaleString()}</p>
               </article>
             ))}
-            {thread.comments.length === 0 ? <p className="text-sm text-slate-600">No replies yet.</p> : null}
+            {thread.comments.length === 0 ? (
+              <p className="text-sm text-zinc-500">No replies yet.</p>
+            ) : null}
           </section>
         </>
       ) : (
-        <p className="text-sm text-slate-600">Loading thread...</p>
+        <p className="text-sm text-zinc-500">Loading thread...</p>
       )}
     </div>
   );

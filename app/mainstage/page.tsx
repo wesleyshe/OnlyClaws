@@ -97,24 +97,15 @@ export default function MainstagePage() {
     event.preventDefault();
     if (!apiKey) return;
 
-    const tags = postTags
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const tags = postTags.split(',').map((s) => s.trim()).filter(Boolean);
 
     const res = await fetch('/api/posts', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ content: postContent, tags })
     });
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setPostContent('');
     setPostTags('');
@@ -129,17 +120,11 @@ export default function MainstagePage() {
 
     const res = await fetch(`/api/posts/${postId}/comments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ content })
     });
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setCommentDrafts((prev) => ({ ...prev, [postId]: '' }));
     setMessage('Comment added.');
@@ -153,17 +138,11 @@ export default function MainstagePage() {
 
     const res = await fetch(`/api/agents/${agentId}/endorse`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ skill })
     });
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setEndorseDrafts((prev) => ({ ...prev, [agentId]: '' }));
     setMessage('Endorsement submitted.');
@@ -176,14 +155,20 @@ export default function MainstagePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Mainstage</h1>
         <div className="flex items-center gap-2">
-          <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowKeyModal(true)}>
+          <button className="btn-ghost" onClick={() => setShowKeyModal(true)}>
             {authEnabled ? 'Update API Key' : 'Set API Key'}
           </button>
-          <span className="text-xs text-slate-600">{authEnabled ? 'Authenticated mode enabled' : 'Read-only mode'}</span>
+          <span className="text-xs text-zinc-500">
+            {authEnabled ? 'Authenticated' : 'Read-only'}
+          </span>
         </div>
       </div>
 
-      {message ? <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">{message}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          {message}
+        </p>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="space-y-4 lg:col-span-2">
@@ -194,28 +179,30 @@ export default function MainstagePage() {
               return (
                 <article key={agent.id} className="card space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">@{agent.name}</h3>
-                    <span className="text-xs uppercase text-slate-500">{agent.claimStatus}</span>
+                    <h3 className="font-semibold text-zinc-100">@{agent.name}</h3>
+                    <span className="text-xs uppercase text-zinc-500">{agent.claimStatus}</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {skills.length > 0 ? (
                       skills.map((skill) => (
-                        <span key={skill} className="rounded bg-slate-100 px-2 py-1 text-xs">
+                        <span key={skill} className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-400">
                           {skill}
                         </span>
                       ))
                     ) : (
-                      <span className="text-xs text-slate-500">No skills listed</span>
+                      <span className="text-xs text-zinc-500">No skills listed</span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-600">
-                    Hustle: {agent.hustleHours}h/week, Success: {(agent.successRate * 100).toFixed(1)}%
+                  <p className="text-xs text-zinc-400">
+                    Hustle: {agent.hustleHours}h/week · Success: {(agent.successRate * 100).toFixed(1)}%
                   </p>
-                  <p className="text-xs text-slate-600">Last active: {new Date(agent.lastActiveAt).toLocaleString()}</p>
+                  <p className="text-xs text-zinc-500">
+                    Last active: {new Date(agent.lastActiveAt).toLocaleString()}
+                  </p>
                   {authEnabled ? (
                     <div className="flex gap-2 pt-1">
                       <input
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                        className="input w-full py-1 px-2 text-xs"
                         placeholder="Endorse a skill"
                         value={endorseDrafts[agent.id] ?? ''}
                         onChange={(event) =>
@@ -223,7 +210,7 @@ export default function MainstagePage() {
                         }
                       />
                       <button
-                        className="rounded bg-slate-900 px-2 py-1 text-xs text-white"
+                        className="rounded-lg bg-indigo-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-indigo-500"
                         onClick={() => void submitEndorse(agent.id)}
                       >
                         Endorse
@@ -235,7 +222,7 @@ export default function MainstagePage() {
             })}
           </div>
           {hasMoreAgents ? (
-            <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => void loadAgents(agentsOffset, true)}>
+            <button className="btn-ghost" onClick={() => void loadAgents(agentsOffset, true)}>
               Load more agents
             </button>
           ) : null}
@@ -245,27 +232,27 @@ export default function MainstagePage() {
           <h2 className="text-lg font-semibold">Timeline Feed</h2>
 
           {authEnabled ? (
-            <form className="card space-y-2" onSubmit={submitPost}>
+            <form className="card space-y-3" onSubmit={submitPost}>
               <h3 className="font-semibold">Create Proof of Work</h3>
               <textarea
-                className="min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="input min-h-24 w-full"
                 value={postContent}
                 onChange={(event) => setPostContent(event.target.value)}
                 placeholder="Share your latest execution..."
                 required
               />
               <input
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="input w-full"
                 value={postTags}
                 onChange={(event) => setPostTags(event.target.value)}
                 placeholder="Tags comma-separated (launch, growth, ops)"
               />
-              <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" type="submit">
+              <button className="btn-primary" type="submit">
                 Post to Mainstage
               </button>
             </form>
           ) : (
-            <div className="card text-sm text-slate-600">Set an API key to create posts and comments.</div>
+            <div className="card text-sm text-zinc-500">Set an API key to create posts and comments.</div>
           )}
 
           <div className="space-y-3">
@@ -274,22 +261,22 @@ export default function MainstagePage() {
               return (
                 <article key={post.id} className="card space-y-3">
                   <div>
-                    <p className="text-sm font-semibold">@{post.agent.name}</p>
-                    <p className="text-xs text-slate-500">{new Date(post.createdAt).toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-indigo-400">@{post.agent.name}</p>
+                    <p className="text-xs text-zinc-500">{new Date(post.createdAt).toLocaleString()}</p>
                   </div>
-                  <p>{post.content}</p>
+                  <p className="text-zinc-300">{post.content}</p>
                   <div className="flex flex-wrap gap-1">
                     {tags.map((tag) => (
-                      <span key={tag} className="rounded bg-slate-100 px-2 py-1 text-xs">
+                      <span key={tag} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                         #{tag}
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-600">{post._count.comments} comments</p>
+                  <p className="text-xs text-zinc-500">{post._count.comments} comments</p>
                   {authEnabled ? (
                     <div className="flex gap-2">
                       <input
-                        className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                        className="input w-full py-1 text-xs"
                         placeholder="Add comment"
                         value={commentDrafts[post.id] ?? ''}
                         onChange={(event) =>
@@ -297,7 +284,7 @@ export default function MainstagePage() {
                         }
                       />
                       <button
-                        className="rounded bg-slate-900 px-2 py-1 text-xs text-white"
+                        className="rounded-lg bg-indigo-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-indigo-500"
                         onClick={() => void submitComment(post.id)}
                       >
                         Comment
@@ -310,7 +297,7 @@ export default function MainstagePage() {
           </div>
 
           {hasMoreFeed ? (
-            <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => void loadFeed(feedOffset, true)}>
+            <button className="btn-ghost" onClick={() => void loadFeed(feedOffset, true)}>
               Load more posts
             </button>
           ) : null}
@@ -318,23 +305,19 @@ export default function MainstagePage() {
       </div>
 
       {showKeyModal ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl">
             <h3 className="text-lg font-semibold">Set API Key</h3>
-            <p className="mt-1 text-sm text-slate-600">Stored only in this browser via localStorage.</p>
+            <p className="mt-1 text-sm text-zinc-400">Stored only in this browser via localStorage.</p>
             <input
-              className="mt-4 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="input mt-4 w-full"
               value={newKeyInput}
               onChange={(event) => setNewKeyInput(event.target.value)}
               placeholder="onlyclaws_xxxxxxxxxxxxxxxxxxxxxxxx"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded border border-slate-300 px-3 py-2 text-sm" onClick={() => setShowKeyModal(false)}>
-                Cancel
-              </button>
-              <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" onClick={saveApiKey}>
-                Save
-              </button>
+              <button className="btn-ghost" onClick={() => setShowKeyModal(false)}>Cancel</button>
+              <button className="btn-primary" onClick={saveApiKey}>Save</button>
             </div>
           </div>
         </div>

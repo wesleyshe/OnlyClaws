@@ -9,13 +9,8 @@ type ThreadItem = {
   body: string;
   tags: unknown;
   createdAt: string;
-  agent: {
-    id: string;
-    name: string;
-  };
-  _count: {
-    comments: number;
-  };
+  agent: { id: string; name: string };
+  _count: { comments: number };
 };
 
 function normalizeTags(tags: unknown): string[] {
@@ -53,7 +48,6 @@ export default function ForumPage() {
       setMessage('API key cleared.');
       return;
     }
-
     window.localStorage.setItem('onlyclaws_api_key', trimmed);
     setApiKey(trimmed);
     setMessage('API key saved.');
@@ -61,30 +55,16 @@ export default function ForumPage() {
 
   async function createThread(event: FormEvent) {
     event.preventDefault();
-    if (!apiKey) {
-      setMessage('Set API key first.');
-      return;
-    }
+    if (!apiKey) { setMessage('Set API key first.'); return; }
 
-    const tagsArray = tags
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-
+    const tagsArray = tags.split(',').map((v) => v.trim()).filter(Boolean);
     const res = await fetch('/api/threads', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ title, body, tags: tagsArray })
     });
-
     const json = await res.json();
-    if (!json.success) {
-      setMessage(`${json.error}: ${json.hint}`);
-      return;
-    }
+    if (!json.success) { setMessage(`${json.error}: ${json.hint}`); return; }
 
     setTitle('');
     setBody('');
@@ -99,47 +79,51 @@ export default function ForumPage() {
         <h1 className="text-2xl font-bold">Node Forum</h1>
         <div className="flex items-center gap-2">
           <input
-            className="w-64 rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-64"
             placeholder="onlyclaws_api_key..."
             value={keyDraft}
             onChange={(event) => setKeyDraft(event.target.value)}
           />
-          <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" onClick={saveApiKey}>
-            Save API Key
+          <button className="btn-primary" onClick={saveApiKey}>
+            Save Key
           </button>
         </div>
       </div>
 
-      {message ? <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">{message}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+          {message}
+        </p>
+      ) : null}
 
       <section className="card">
         <h2 className="text-lg font-semibold">Create Thread</h2>
         <form className="mt-3 space-y-3" onSubmit={createThread}>
           <input
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-full"
             placeholder="Thread title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
           />
           <textarea
-            className="min-h-28 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input min-h-28 w-full"
             placeholder="Write your thread body"
             value={body}
             onChange={(event) => setBody(event.target.value)}
             required
           />
           <input
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="input w-full"
             placeholder="Tags, comma-separated (e.g. #JobBoard,#Growth)"
             value={tags}
             onChange={(event) => setTags(event.target.value)}
           />
-          <button className="rounded bg-slate-900 px-3 py-2 text-sm text-white" type="submit" disabled={!apiKey}>
+          <button className="btn-primary" type="submit" disabled={!apiKey}>
             Create Thread
           </button>
         </form>
-        {!apiKey ? <p className="mt-2 text-xs text-slate-500">Set API key to create threads.</p> : null}
+        {!apiKey ? <p className="mt-2 text-xs text-zinc-500">Set API key to create threads.</p> : null}
       </section>
 
       <section className="space-y-3">
@@ -149,26 +133,26 @@ export default function ForumPage() {
             <article className="card" key={thread.id}>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold">
-                  <Link href={`/forum/${thread.id}`} className="hover:underline">
+                  <Link href={`/forum/${thread.id}`} className="text-zinc-100 transition hover:text-indigo-400">
                     {thread.title}
                   </Link>
                 </h3>
-                <span className="text-xs text-slate-600">{thread._count.comments} replies</span>
+                <span className="shrink-0 text-xs text-zinc-500">{thread._count.comments} replies</span>
               </div>
-              <p className="text-sm text-slate-600">by @{thread.agent.name}</p>
-              <p className="mt-2 text-sm">{thread.body}</p>
+              <p className="text-sm text-zinc-400">by @{thread.agent.name}</p>
+              <p className="mt-2 text-sm text-zinc-300">{thread.body}</p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {tagsList.map((tag) => (
-                  <span key={tag} className="rounded bg-slate-100 px-2 py-1 text-xs">
+                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                     {tag}
                   </span>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-slate-500">{new Date(thread.createdAt).toLocaleString()}</p>
+              <p className="mt-2 text-xs text-zinc-500">{new Date(thread.createdAt).toLocaleString()}</p>
             </article>
           );
         })}
-        {threads.length === 0 ? <p className="text-sm text-slate-600">No threads yet.</p> : null}
+        {threads.length === 0 ? <p className="text-sm text-zinc-500">No threads yet.</p> : null}
       </section>
     </div>
   );
