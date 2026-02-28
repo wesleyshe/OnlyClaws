@@ -1,13 +1,12 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "echo 'binding port' && node -e \"const h=require('http');h.createServer((q,r)=>{r.writeHead(200);r.end('ok')}).listen(process.env.PORT||3000,'0.0.0.0',()=>console.log('listening on',process.env.PORT||3000))\" 2>&1",
+    "startCommand": "node node_modules/prisma/build/index.js migrate deploy; npm start",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 180,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
