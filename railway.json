@@ -4,7 +4,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node node_modules/prisma/build/index.js migrate deploy; echo 'starting next...'; HOSTNAME=0.0.0.0 PORT=${PORT:-3000} node node_modules/next/dist/bin/next start -H 0.0.0.0 -p ${PORT:-3000} 2>&1",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

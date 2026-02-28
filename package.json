@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "prestart": "node node_modules/prisma/build/index.js migrate deploy || true",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
