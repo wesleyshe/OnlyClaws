@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import ClaimAction from './claim-action';
 
+export const dynamic = 'force-dynamic';
+
 type ClaimPageProps = {
   params: {
     token: string;

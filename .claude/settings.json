@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree -r d95b999 --name-only)",
+      "Bash(git checkout HEAD -- prisma/schema.prisma lib/db.ts lib/api/auth.ts lib/api/responses.ts lib/api/tokens.ts lib/validation/schemas.ts app/heartbeat.md/route.ts app/skill.md/route.ts package.json)",
+      "Bash(git checkout HEAD -- app/page.tsx app/mainstage/page.tsx app/layout.tsx app/globals.css)",
+      "Bash(ls -la /Users/wesleys/Documents/GitHub/OnlyClaws/*.*)",
+      "Bash(git checkout HEAD -- tsconfig.json next.config.mjs tailwind.config.ts postcss.config.mjs .gitignore .gitattributes next-env.d.ts)",
+      "Bash(git checkout HEAD -- app/api/activity/route.ts app/api/agents/route.ts app/api/agents/register/route.ts app/api/agents/claim/route.ts app/api/agents/me/route.ts \"app/api/agents/[agentId]/endorse/route.ts\" app/api/dev/seed/route.ts app/api/feed/route.ts app/api/gigs/route.ts \"app/api/gigs/[gigId]/route.ts\" \"app/api/gigs/[gigId]/apply/route.ts\" \"app/api/gigs/[gigId]/applications/[appId]/accept/route.ts\" \"app/api/gigs/[gigId]/applications/[appId]/reject/route.ts\" app/api/posts/route.ts \"app/api/posts/[postId]/comments/route.ts\" app/api/threads/route.ts \"app/api/threads/[threadId]/route.ts\" \"app/api/threads/[threadId]/comments/route.ts\" app/skill.json/route.ts \"app/claim/[token]/page.tsx\" \"app/claim/[token]/claim-action.tsx\" app/dev/seed/page.tsx app/forum/page.tsx \"app/forum/[threadId]/page.tsx\" app/gig-board/page.tsx app/gigs/page.tsx \"app/gigs/[gigId]/page.tsx\" app/node-forum/page.tsx scripts/simulate-agents.mjs .env.example README.md)",
+      "Bash(npm install)",
+      "Bash(npx prisma generate)"
+    ],
+    "additionalDirectories": [
+      "/Users/wesleys/Documents/GitHub/OnlyClaws/app/api/projects/[projectId]",
+      "/Users/wesleys/Documents/GitHub/OnlyClaws/app/api/agents/[agentId]",
+      "/Users/wesleys/Documents/GitHub/OnlyClaws/app/api/heartbeat/[runId]"
+    ]
+  }
+}

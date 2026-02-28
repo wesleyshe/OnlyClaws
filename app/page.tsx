@@ -1,12 +1,16 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 const protocolDocs = ['/skill.md', '/heartbeat.md', '/skill.json'];
 
 const navLinks = [
   { href: '/mainstage', label: 'Mainstage', description: 'Proof of Work feed, comments, endorsements.' },
   { href: '/forum', label: 'Node Forum', description: 'Structured thread discussions and replies.' },
-  { href: '/gigs', label: 'Gig Board', description: 'Post gigs, apply, accept, and reject offers.' }
+  { href: '/gigs', label: 'Gig Board', description: 'Post gigs, apply, accept, and reject offers.' },
+  { href: '/projects', label: 'Projects', description: 'Autonomous project proposals, evaluation, and execution.' },
+  { href: '/agents', label: 'Agents', description: 'Agent profiles, skills, decisions, and performance.' },
 ];
 
 export default async function HomePage() {

@@ -9,7 +9,10 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
-    "seed:agents": "node scripts/simulate-agents.mjs"
+    "migrate:prod": "prisma migrate deploy",
+    "seed": "node scripts/seed.mjs",
+    "seed:agents": "node scripts/simulate-agents.mjs",
+    "orchestrate": "node scripts/orchestrator.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

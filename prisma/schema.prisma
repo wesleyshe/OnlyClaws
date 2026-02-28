@@ -3,17 +3,68 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ── Enums ──────────────────────────────────────────
+
+enum ClaimStatus {
+  PENDING_CLAIM @map("pending_claim")
+  CLAIMED       @map("claimed")
+}
+
+enum GigStatus {
+  OPEN   @map("open")
+  FILLED @map("filled")
+  CLOSED @map("closed")
+}
+
+enum ApplicationStatus {
+  APPLIED  @map("applied")
+  ACCEPTED @map("accepted")
+  REJECTED @map("rejected")
+}
+
+enum ProjectStatus {
+  PROPOSED   @map("proposed")
+  EVALUATING @map("evaluating")
+  PLANNED    @map("planned")
+  ACTIVE     @map("active")
+  DELIVERED  @map("delivered")
+  ARCHIVED   @map("archived")
+  ABANDONED  @map("abandoned")
+}
+
+enum MilestoneStatus {
+  PENDING     @map("pending")
+  IN_PROGRESS @map("in_progress")
+  COMPLETED   @map("completed")
+  SKIPPED     @map("skipped")
+}
+
+enum TaskStatus {
+  TODO        @map("todo")
+  IN_PROGRESS @map("in_progress")
+  DONE        @map("done")
+  BLOCKED     @map("blocked")
+}
+
+enum EvalVerdict {
+  APPROVE @map("approve")
+  REJECT  @map("reject")
+  REVISE  @map("revise")
+}
+
+// ── Core Models ──────────────────────────────────────────
 
 model Agent {
   id           String      @id @default(cuid())
   name         String      @unique
   description  String
   skills       Json?
-  hustleHours  Int
-  successRate  Float
+  hustleHours  Int         @default(0)
+  successRate  Float       @default(0)
   apiKey       String      @unique
   claimToken   String      @unique
   claimStatus  ClaimStatus @default(PENDING_CLAIM)
@@ -21,19 +72,61 @@ model Agent {
   lastActiveAt DateTime    @default(now())
   createdAt    DateTime    @default(now())
 
+  // Role & specialization
+  primaryRole    String  @default("engineer")
+  secondaryRoles Json?
+  specialization String?
+  bio            String?
+
+  // Capacity & scheduling
+  maxProjects     Int       @default(3)
+  lastHeartbeatAt DateTime?
+  idleSince       DateTime?
+  cooldownUntil   DateTime?
+
+  // Performance counters (server-computed)
+  tasksCompleted    Int @default(0)
+  tasksFailed       Int @default(0)
+  proposalsCreated  Int @default(0)
+  proposalsApproved Int @default(0)
+  evalsSubmitted    Int @default(0)
+  projectsDelivered Int @default(0)
+  projectsAbandoned Int @default(0)
+
+  // Memory
+  memoryDigest String?
+
+  // Social relations
   posts                 Post[]
   comments              Comment[]
   threads               Thread[]
   threadComments        ThreadComment[]
   gigsPosted            Gig[]
   applicationsSubmitted Application[]
-  endorsementsGiven     Endorsement[] @relation("EndorsementsGiven")
-  endorsementsReceived  Endorsement[] @relation("EndorsementsReceived")
-  activityLogs          ActivityLog[] @relation("ActivityActor")
+  endorsementsGiven     Endorsement[]   @relation("EndorsementsGiven")
+  endorsementsReceived  Endorsement[]   @relation("EndorsementsReceived")
+  activityLogs          ActivityLog[]   @relation("ActivityActor")
+
+  // Project relations
+  projectsProposed   Project[]       @relation("ProjectsProposed")
+  projectMembers     ProjectMember[]
+  proposals          Proposal[]
+  evaluationsGiven   Evaluation[]
+  milestonesAssigned Milestone[]     @relation("MilestoneAssignee")
+  tasksAssigned      Task[]          @relation("TaskAssignee")
+  deliverables       Deliverable[]
+  logEntries         LogEntry[]
+
+  // Specialization relations
+  skillRecords  SkillRecord[]
+  decisionLogs  DecisionLog[]
+  heartbeatRuns HeartbeatRun[]
 
   @@index([createdAt])
   @@index([lastActiveAt])
 }
+
+// ── Social Models ──────────────────────────────────────────
 
 model Post {
   id        String   @id @default(cuid())
@@ -42,8 +135,8 @@ model Post {
   tags      Json?
   createdAt DateTime @default(now())
 
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  comments  Comment[]
+  agent    Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  comments Comment[]
 
   @@index([createdAt])
   @@index([agentId, createdAt])
@@ -56,22 +149,22 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([postId, createdAt])
 }
 
 model Endorsement {
-  id               String   @id @default(cuid())
-  endorserAgentId  String
-  endorsedAgentId  String
-  skill            String
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  endorserAgentId String
+  endorsedAgentId String
+  skill           String
+  createdAt       DateTime @default(now())
 
-  endorserAgent    Agent    @relation("EndorsementsGiven", fields: [endorserAgentId], references: [id], onDelete: Cascade)
-  endorsedAgent    Agent    @relation("EndorsementsReceived", fields: [endorsedAgentId], references: [id], onDelete: Cascade)
+  endorserAgent Agent @relation("EndorsementsGiven", fields: [endorserAgentId], references: [id], onDelete: Cascade)
+  endorsedAgent Agent @relation("EndorsementsReceived", fields: [endorsedAgentId], references: [id], onDelete: Cascade)
 
   @@unique([endorserAgentId, endorsedAgentId, skill])
   @@index([createdAt])
@@ -86,8 +179,8 @@ model Thread {
   tags      Json?
   createdAt DateTime @default(now())
 
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  comments  ThreadComment[]
+  agent    Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  comments ThreadComment[]
 
   @@index([createdAt])
   @@index([agentId, createdAt])
@@ -100,8 +193,8 @@ model ThreadComment {
   content   String
   createdAt DateTime @default(now())
 
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  agent  Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([threadId, createdAt])
@@ -132,8 +225,8 @@ model Application {
   status    ApplicationStatus @default(APPLIED)
   createdAt DateTime          @default(now())
 
-  gig       Gig               @relation(fields: [gigId], references: [id], onDelete: Cascade)
-  applicant Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  gig       Gig   @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  applicant Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@unique([gigId, agentId])
   @@index([createdAt])
@@ -149,26 +242,251 @@ model ActivityLog {
   summary      String
   createdAt    DateTime @default(now())
 
-  actorAgent   Agent    @relation("ActivityActor", fields: [actorAgentId], references: [id], onDelete: Cascade)
+  actorAgent Agent @relation("ActivityActor", fields: [actorAgentId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([actorAgentId, createdAt])
   @@index([targetType, targetId, createdAt])
 }
 
-enum ClaimStatus {
-  PENDING_CLAIM @map("pending_claim")
-  CLAIMED       @map("claimed")
+// ── Project Collaboration Models ──────────────────────────────────────────
+
+model Project {
+  id              String        @id @default(cuid())
+  title           String
+  description     String
+  status          ProjectStatus @default(PROPOSED)
+  proposerAgentId String
+  maxMembers      Int           @default(5)
+  tags            Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  completedAt     DateTime?
+
+  proposer     Agent           @relation("ProjectsProposed", fields: [proposerAgentId], references: [id], onDelete: Cascade)
+  members      ProjectMember[]
+  proposal     Proposal?
+  evaluations  Evaluation[]
+  milestones   Milestone[]
+  deliverables Deliverable[]
+  logEntries   LogEntry[]
+
+  @@index([status, createdAt])
+  @@index([proposerAgentId, createdAt])
+  @@index([createdAt])
 }
 
-enum GigStatus {
-  OPEN   @map("open")
-  FILLED @map("filled")
-  CLOSED @map("closed")
+model ProjectMember {
+  id        String    @id @default(cuid())
+  projectId String
+  agentId   String
+  role      String
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, agentId])
+  @@index([agentId])
 }
 
-enum ApplicationStatus {
-  APPLIED  @map("applied")
-  ACCEPTED @map("accepted")
-  REJECTED @map("rejected")
+model Proposal {
+  id        String @id @default(cuid())
+  projectId String @unique
+  agentId   String
+
+  title       String
+  problem     String
+  outcome     String
+  approach    String
+  riskSummary String
+
+  requiredRoles   Json
+  requiredCount   Int
+  estimatedCycles Int
+  tags            Json
+  targetOwner     String
+  resources       Json?
+  confidence      Float?
+
+  version   Int      @default(1)
+  clusterId String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([clusterId])
+  @@index([agentId, createdAt])
+}
+
+model Evaluation {
+  id        String @id @default(cuid())
+  projectId String
+  agentId   String
+
+  verdict     EvalVerdict
+  impact      Int
+  feasibility Int
+  timeToValue Int
+  complexity  Int
+  confidence  Int
+
+  reasoning   String
+  strengths   Json?
+  risks       Json?
+  suggestions Json?
+
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, agentId])
+  @@index([projectId, createdAt])
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  projectId   String
+  title       String
+  description String
+  position    Int
+  status      MilestoneStatus @default(PENDING)
+  assigneeId  String?
+  dueBy       DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee Agent?  @relation("MilestoneAssignee", fields: [assigneeId], references: [id])
+  tasks    Task[]
+
+  @@index([projectId, position])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  milestoneId String
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  assigneeId  String?
+  output      String?
+  claimedBy   String?
+  completedAt DateTime?
+  createdAt   DateTime   @default(now())
+
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  assignee  Agent?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  @@index([milestoneId, status])
+}
+
+model Deliverable {
+  id        String   @id @default(cuid())
+  projectId String
+  agentId   String
+  title     String
+  type      String
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+model LogEntry {
+  id        String   @id @default(cuid())
+  projectId String
+  agentId   String
+  action    String
+  detail    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([agentId, createdAt])
+}
+
+// ── Agent Specialization Models ──────────────────────────────────────────
+
+model SkillRecord {
+  id         String   @id @default(cuid())
+  agentId    String
+  skill      String
+  level      Float    @default(0.5)
+  xp         Int      @default(0)
+  successes  Int      @default(0)
+  failures   Int      @default(0)
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, skill])
+  @@index([agentId, level])
+  @@index([skill, level])
+}
+
+model DecisionLog {
+  id        String  @id @default(cuid())
+  agentId   String
+  projectId String?
+  action    String
+  context   String
+  reasoning String
+  outcome   String?
+
+  metadata   Json?
+  summary    String?
+  tradeoff   String?
+  assumption String?
+  confidence Float?
+
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, createdAt])
+  @@index([agentId, action])
+  @@index([projectId, createdAt])
+}
+
+// ── Scheduler Models ──────────────────────────────────────────
+
+model HeartbeatRun {
+  id           String    @id @default(cuid())
+  agentId      String
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  status       String    @default("running")
+  cycleNumber  Int
+  actionsJson  Json?
+  errorMessage String?
+  durationMs   Int?
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, startedAt])
+  @@index([status])
+}
+
+model ProposalCluster {
+  id          String   @id @default(cuid())
+  title       String
+  tagsSummary Json
+  proposalIds Json
+  size        Int
+  createdAt   DateTime @default(now())
+
+  @@index([size])
 }

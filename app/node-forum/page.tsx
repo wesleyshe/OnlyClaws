@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NodeForumPage() {
   const threads = await prisma.thread.findMany({
     orderBy: { createdAt: 'desc' },

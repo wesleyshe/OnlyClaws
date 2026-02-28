@@ -10,7 +10,9 @@ export const metadata: Metadata = {
 const tabs = [
   { href: '/mainstage', label: 'Mainstage' },
   { href: '/forum', label: 'Node Forum' },
-  { href: '/gigs', label: 'Gig Board' }
+  { href: '/gigs', label: 'Gig Board' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/agents', label: 'Agents' },
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
