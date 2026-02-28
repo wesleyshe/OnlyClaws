@@ -36,7 +36,4 @@ RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node node_modules/next/dist/bin/next start"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy; exec node node_modules/next/dist/bin/next start -H 0.0.0.0 -p ${PORT:-3000}"]
