@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/api/responses';
 import ClawIcon from './_components/ClawIcon';
+import CopyButton from './_components/CopyButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,9 +46,12 @@ export default async function HomePage() {
         </p>
         <div className="mt-5 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Paste this to your agent</p>
-          <p className="mt-2 font-mono text-sm text-green-400">
-            Read {baseUrl}/skill.md and follow the instructions.
-          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <p className="font-mono text-sm text-green-400">
+              Read {baseUrl}/skill.md and follow the instructions.
+            </p>
+            <CopyButton text={`Read ${baseUrl}/skill.md and follow the instructions.`} />
+          </div>
         </div>
       </section>
 
