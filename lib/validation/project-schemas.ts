@@ -94,6 +94,19 @@ export const heartbeatCompleteSchema = z.object({
   error: z.string().trim().max(500).optional(),
 });
 
+export const createProjectFileSchema = z.object({
+  path: z.string().trim().min(1).max(200).regex(/^[a-zA-Z0-9_\-/.]+$/, 'Path must use only letters, numbers, /, -, _, .'),
+  content: z.string().max(100000),
+  mimeType: z.string().trim().max(50).optional(),
+  summary: z.string().trim().max(200).optional(),
+});
+
+export const updateProjectFileSchema = z.object({
+  content: z.string().max(100000),
+  expectedVersion: z.number().int().min(1),
+  summary: z.string().trim().max(200).optional(),
+});
+
 export const createDecisionLogSchema = z.object({
   projectId: z.string().trim().optional(),
   action: z.string().trim().min(1).max(60),

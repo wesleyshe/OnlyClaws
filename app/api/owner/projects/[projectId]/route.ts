@@ -32,6 +32,13 @@ export async function GET(
           orderBy: { createdAt: 'desc' },
           include: { agent: { select: { id: true, name: true } } },
         },
+        files: {
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            creatorAgent: { select: { id: true, name: true } },
+            updaterAgent: { select: { id: true, name: true } },
+          },
+        },
         logEntries: {
           orderBy: { createdAt: 'desc' },
           take: 50,

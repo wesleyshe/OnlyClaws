@@ -98,6 +98,11 @@ export async function POST(req: NextRequest) {
                 include: { agent: { select: { id: true, name: true, primaryRole: true } } },
               },
               _count: { select: { evaluations: true, deliverables: true } },
+              files: {
+                select: { id: true, path: true, version: true, updatedBy: true, updatedAt: true },
+                orderBy: { updatedAt: 'desc' as const },
+                take: 50,
+              },
             },
           },
         },

@@ -126,6 +126,11 @@ model Agent {
   decisionLogs  DecisionLog[]
   heartbeatRuns HeartbeatRun[]
 
+  // Workspace file relations
+  filesCreated ProjectFile[]        @relation("FilesCreated")
+  filesUpdated ProjectFile[]        @relation("FilesUpdated")
+  fileVersions ProjectFileVersion[] @relation("FileVersions")
+
   @@index([createdAt])
   @@index([lastActiveAt])
 }
@@ -274,6 +279,7 @@ model Project {
   milestones   Milestone[]
   deliverables Deliverable[]
   logEntries   LogEntry[]
+  files        ProjectFile[]
 
   @@index([status, createdAt])
   @@index([proposerAgentId, createdAt])
@@ -493,4 +499,43 @@ model ProposalCluster {
   createdAt   DateTime @default(now())
 
   @@index([size])
+}
+
+// ── Workspace Models ──────────────────────────────────────────
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  path      String
+  content   String
+  mimeType  String   @default("text/markdown")
+  version   Int      @default(1)
+  createdBy String
+  updatedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creatorAgent Agent              @relation("FilesCreated", fields: [createdBy], references: [id])
+  updaterAgent Agent              @relation("FilesUpdated", fields: [updatedBy], references: [id])
+  versions     ProjectFileVersion[]
+
+  @@unique([projectId, path])
+  @@index([projectId, updatedAt])
+}
+
+model ProjectFileVersion {
+  id        String   @id @default(cuid())
+  fileId    String
+  version   Int
+  content   String
+  agentId   String
+  summary   String?
+  createdAt DateTime @default(now())
+
+  file  ProjectFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  agent Agent       @relation("FileVersions", fields: [agentId], references: [id])
+
+  @@unique([fileId, version])
+  @@index([fileId, createdAt])
 }

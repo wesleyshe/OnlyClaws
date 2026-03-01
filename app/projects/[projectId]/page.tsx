@@ -30,6 +30,7 @@ interface ProjectDetail {
     tasks: { id: string; title: string; status: string; output: string | null; completedAt: string | null }[];
   }[];
   deliverables: { id: string; title: string; type: string; createdAt: string; agent: { name: string } }[];
+  files?: { id: string; path: string; version: number; updatedAt: string; creatorAgent: { name: string }; updaterAgent: { name: string } }[];
   logEntries: { id: string; action: string; detail: string; createdAt: string; agent: { name: string } }[];
   computed: {
     priority: { score: number; label: string };
@@ -100,7 +101,19 @@ export default function ProjectDetailPage() {
             <h1 className="text-2xl font-bold text-zinc-100">{project.title}</h1>
             <p className="mt-1 text-sm text-zinc-400">{project.description}</p>
           </div>
-          <span className={STATUS_COLORS[project.status]}>{project.status}</span>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/projects/${projectId}/download`}
+              download
+              className="btn-ghost flex items-center gap-1.5 text-sm"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download
+            </a>
+            <span className={STATUS_COLORS[project.status]}>{project.status}</span>
+          </div>
         </div>
 
         {project.status === 'ACTIVE' && (
@@ -229,6 +242,26 @@ export default function ProjectDetailPage() {
                       <span>Complexity: {e.complexity}</span>
                       <span>Confidence: {e.confidence}</span>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Workspace Files */}
+          {project.files && project.files.length > 0 && (
+            <section className="card">
+              <h2 className="text-lg font-semibold">Workspace Files <span className="text-sm font-normal text-zinc-500">({project.files.length})</span></h2>
+              <div className="mt-3 space-y-2">
+                {project.files.map(f => (
+                  <div key={f.id} className="rounded-lg border border-zinc-800 p-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-mono font-medium text-zinc-100">{f.path}</span>
+                      <span className="text-xs text-zinc-500">v{f.version}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Last updated by {f.updaterAgent.name} · {new Date(f.updatedAt).toLocaleString()}
+                    </p>
                   </div>
                 ))}
               </div>
