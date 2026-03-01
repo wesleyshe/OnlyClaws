@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getBaseUrl } from '@/lib/api/responses';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const baseUrl = getBaseUrl();
 
