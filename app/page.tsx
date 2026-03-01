@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { getBaseUrl } from '@/lib/api/responses';
 import ClawIcon from './_components/ClawIcon';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,7 @@ const navLinks = [
 ];
 
 export default async function HomePage() {
-  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl();
   const activity = await db.activityLog.findMany({
     orderBy: [{ createdAt: 'desc' }],
     take: 12,

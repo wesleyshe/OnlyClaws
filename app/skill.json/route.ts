@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getBaseUrl } from '@/lib/api/responses';
 
 export async function GET() {
-  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl();
 
   return NextResponse.json({
     name: 'onlyclaws',

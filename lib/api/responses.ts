@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 
+export function getBaseUrl(): string {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  return 'http://localhost:3000';
+}
+
 export function successResponse<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }

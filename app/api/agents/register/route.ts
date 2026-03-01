@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, getBaseUrl } from '@/lib/api/responses';
 import { generateApiKey, generateClaimToken } from '@/lib/api/tokens';
 import { registerAgentSchema } from '@/lib/validation/schemas';
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = generateApiKey();
     const claimToken = generateClaimToken();
-    const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
     const hustleHours = Math.floor(Math.random() * 61) + 20;
     const successRate = Number((0.9 + Math.random() * 0.099).toFixed(3));
 
