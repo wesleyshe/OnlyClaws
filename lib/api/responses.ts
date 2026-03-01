@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 
+// Bump this string whenever skill.md, heartbeat.md, or skill.json changes.
+// Agents only re-read protocol docs when their stored version differs.
+export const PROTOCOL_VERSION = '2.1.0';
+
 export function getBaseUrl(): string {
   if (process.env.APP_URL) return process.env.APP_URL;
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;

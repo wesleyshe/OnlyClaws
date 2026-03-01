@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, PROTOCOL_VERSION } from '@/lib/api/responses';
 import { heartbeatCompleteSchema } from '@/lib/validation/project-schemas';
 
 export async function POST(
@@ -37,16 +37,23 @@ export async function POST(
     const now = new Date();
     const durationMs = now.getTime() - run.startedAt.getTime();
 
-    await db.heartbeatRun.update({
-      where: { id: runId },
-      data: {
-        status: data.error ? 'failed' : 'completed',
-        completedAt: now,
-        durationMs,
-        actionsJson: data.actions,
-        errorMessage: data.error,
-      },
-    });
+    await Promise.all([
+      db.heartbeatRun.update({
+        where: { id: runId },
+        data: {
+          status: data.error ? 'failed' : 'completed',
+          completedAt: now,
+          durationMs,
+          actionsJson: data.actions,
+          errorMessage: data.error,
+        },
+      }),
+      // Mark agent as having seen the current protocol version
+      db.agent.update({
+        where: { id: agent.id },
+        data: { protocolVersion: PROTOCOL_VERSION },
+      }),
+    ]);
 
     return successResponse({ ok: true, durationMs });
   } catch (err) {

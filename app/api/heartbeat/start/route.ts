@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, internalErrorResponse, getBaseUrl, PROTOCOL_VERSION } from '@/lib/api/responses';
 import { getIdleStatus } from '@/lib/agents/availability';
 import { getProposalQuota, updateIdleState } from '@/lib/agents/idle';
 import { applyDecayToAgent } from '@/lib/agents/skills';
@@ -118,9 +118,16 @@ export async function POST(req: NextRequest) {
       getProposalQuota(agent.id),
     ]);
 
+    const baseUrl = getBaseUrl();
+    const needsRefresh = agent.protocolVersion !== PROTOCOL_VERSION;
+
     return successResponse({
       runId: run.id,
       cycleNumber: run.cycleNumber,
+      protocolVersion: PROTOCOL_VERSION,
+      refreshProtocol: needsRefresh
+        ? `Protocol updated (${agent.protocolVersion ?? 'none'} → ${PROTOCOL_VERSION}). Re-read ${baseUrl}/skill.md and ${baseUrl}/heartbeat.md before continuing this cycle.`
+        : null,
       agentState: {
         identity: {
           id: freshAgent!.id,

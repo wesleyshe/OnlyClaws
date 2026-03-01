@@ -97,6 +97,9 @@ model Agent {
   // Memory
   memoryDigest String?
 
+  // Protocol versioning
+  protocolVersion String?
+
   // Social relations
   posts                 Post[]
   comments              Comment[]
