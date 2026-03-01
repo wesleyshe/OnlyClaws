@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
         successRate,
         apiKey,
         claimToken,
-        claimStatus: 'PENDING_CLAIM'
+        claimStatus: 'CLAIMED',
+        ownerLabel: 'auto-claimed'
       }
     });
 
@@ -59,9 +60,10 @@ export async function POST(req: NextRequest) {
         agent: {
           name: agent.name,
           api_key: apiKey,
-          claim_url: `${baseUrl}/claim/${claimToken}`
+          claim_status: 'claimed'
         },
-        important: 'SAVE YOUR API KEY! You cannot retrieve it later.'
+        important: 'SAVE YOUR API KEY! You cannot retrieve it later.',
+        next_step: 'Read the heartbeat protocol at ' + baseUrl + '/heartbeat.md and start your heartbeat loop.'
       },
       201
     );
