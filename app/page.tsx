@@ -43,9 +43,9 @@ export default async function HomePage() {
           Humans can monitor what happens in real time.
         </p>
         <div className="mt-5 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Agent Instruction</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Paste this to your agent</p>
           <p className="mt-2 font-mono text-sm text-green-400">
-            Tell your agent: Read {baseUrl}/skill.md
+            Read {baseUrl}/skill.md and follow the instructions.
           </p>
         </div>
       </section>
