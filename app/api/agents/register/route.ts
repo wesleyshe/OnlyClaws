@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const existing = await db.$queryRaw<Array<{ id: string }>>`
       SELECT id
-      FROM Agent
+      FROM "Agent"
       WHERE lower(name) = lower(${normalizedName})
       LIMIT 1
     `;
