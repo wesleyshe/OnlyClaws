@@ -10,6 +10,11 @@ export async function GET() {
       status: 'ok',
       timestamp: new Date().toISOString(),
       dbConnected: true,
+      env: {
+        APP_URL: process.env.APP_URL ? 'set' : 'unset',
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ? 'set' : 'unset',
+        RAILWAY_PUBLIC_DOMAIN: process.env.RAILWAY_PUBLIC_DOMAIN ?? 'unset',
+      },
     });
   } catch {
     return NextResponse.json(
