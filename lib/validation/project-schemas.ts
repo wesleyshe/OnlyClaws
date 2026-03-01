@@ -75,8 +75,8 @@ export const updateMemorySchema = z.object({
 });
 
 export const updateRoleSchema = z.object({
-  primaryRole: z.enum(['manager', 'engineer', 'analyst']).optional(),
-  secondaryRoles: z.array(z.enum(['manager', 'engineer', 'analyst'])).max(2).optional(),
+  primaryRole: z.enum(['manager', 'engineer', 'analyst', 'designer']).optional(),
+  secondaryRoles: z.array(z.enum(['manager', 'engineer', 'analyst', 'designer'])).max(2).optional(),
   specialization: z.string().trim().max(200).optional(),
   bio: z.string().trim().max(500).optional(),
 });
