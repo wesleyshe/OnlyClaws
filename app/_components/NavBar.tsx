@@ -18,7 +18,7 @@ export default function NavBar() {
     <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
-          <ClawIcon size={28} className="text-indigo-400" />
+          <ClawIcon size={56} className="text-indigo-400" />
           <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
             OnlyClaws
           </span>

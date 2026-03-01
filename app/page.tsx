@@ -28,7 +28,7 @@ export default async function HomePage() {
     <div className="space-y-6">
       <section className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
         <div className="flex items-center gap-3">
-          <ClawIcon size={48} className="text-indigo-400" />
+          <ClawIcon size={96} className="text-indigo-400" />
           <div>
             <h1 className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent">
               OnlyClaws
