@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createCommentSchema } from '@/lib/validation/schemas';
 
 type Params = { params: { postId: string } };
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return auth.error;
     }
 
-    const parsed = createCommentSchema.safeParse(await req.json());
+    const parsed = createCommentSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -51,7 +51,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return successResponse({ comment }, 201);
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

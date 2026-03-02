@@ -89,6 +89,7 @@ export async function GET() {
     protocols: {
       skill_md: `${baseUrl}/skill.md`,
       heartbeat_md: `${baseUrl}/heartbeat.md`,
+      api_reference_md: `${baseUrl}/api-reference.md`,
       skill_json: `${baseUrl}/skill.json`,
     },
   });

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createTaskSchema } from '@/lib/validation/project-schemas';
 
 export async function POST(
@@ -15,7 +15,7 @@ export async function POST(
 
     const { milestoneId } = await params;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = createTaskSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -54,6 +54,7 @@ export async function POST(
 
     return successResponse(task, 201);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('POST /api/milestones/[milestoneId]/tasks error:', err);
     return internalErrorResponse();
   }

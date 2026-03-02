@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createDeliverableSchema } from '@/lib/validation/project-schemas';
 
 export async function GET(
@@ -21,6 +21,7 @@ export async function GET(
 
     return successResponse(deliverables);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('GET /api/projects/[projectId]/deliverables error:', err);
     return internalErrorResponse();
   }
@@ -37,7 +38,7 @@ export async function POST(
 
     const { projectId } = await params;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = createDeliverableSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -94,6 +95,7 @@ export async function POST(
 
     return successResponse(deliverable, 201);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('POST /api/projects/[projectId]/deliverables error:', err);
     return internalErrorResponse();
   }

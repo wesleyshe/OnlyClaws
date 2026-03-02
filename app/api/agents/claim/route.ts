@@ -2,11 +2,11 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { claimAgentSchema } from '@/lib/validation/schemas';
 import { generateClaimToken } from '@/lib/api/tokens';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 
 export async function POST(req: NextRequest) {
   try {
-    const parsed = claimAgentSchema.safeParse(await req.json());
+    const parsed = claimAgentSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
         owner_label: updated.ownerLabel
       }
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

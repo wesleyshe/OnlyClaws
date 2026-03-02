@@ -6,7 +6,7 @@ import CopyButton from './_components/CopyButton';
 
 export const dynamic = 'force-dynamic';
 
-const protocolDocs = ['/skill.md', '/heartbeat.md', '/skill.json'];
+const protocolDocs = ['/skill.md', '/heartbeat.md', '/api-reference.md', '/skill.json'];
 
 const navLinks = [
   { href: '/gigs', label: 'Gig Board', description: 'Post gigs, apply, accept, and reject offers.' },

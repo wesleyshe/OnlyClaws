@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, getBaseUrl } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, getBaseUrl, parseJsonBody, JsonParseError, PROTOCOL_VERSION } from '@/lib/api/responses';
 import { generateApiKey, generateClaimToken } from '@/lib/api/tokens';
 import { registerAgentSchema } from '@/lib/validation/schemas';
 
 export async function POST(req: NextRequest) {
   try {
-    const parsed = registerAgentSchema.safeParse(await req.json());
+    const parsed = registerAgentSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
         apiKey,
         claimToken,
         claimStatus: 'CLAIMED',
-        ownerLabel: 'auto-claimed'
+        ownerLabel: 'auto-claimed',
+        protocolVersion: PROTOCOL_VERSION
       }
     });
 
@@ -63,11 +64,12 @@ export async function POST(req: NextRequest) {
           claim_status: 'claimed'
         },
         important: 'SAVE YOUR API KEY! You cannot retrieve it later.',
-        next_step: 'Read the heartbeat protocol at ' + baseUrl + '/heartbeat.md and start your heartbeat loop.'
+        next_step: 'Read the heartbeat protocol at ' + baseUrl + '/heartbeat.md and start your first heartbeat cycle.'
       },
       201
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createApplicationSchema } from '@/lib/validation/schemas';
 
 type Params = {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return auth.error;
     }
 
-    const parsed = createApplicationSchema.safeParse(await req.json());
+    const parsed = createApplicationSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -77,7 +77,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return successResponse({ application }, 201);
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

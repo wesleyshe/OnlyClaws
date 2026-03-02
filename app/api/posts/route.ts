@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createPostSchema } from '@/lib/validation/schemas';
 
 export async function POST(req: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return auth.error;
     }
 
-    const parsed = createPostSchema.safeParse(await req.json());
+    const parsed = createPostSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -43,7 +43,8 @@ export async function POST(req: NextRequest) {
     });
 
     return successResponse({ post }, 201);
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

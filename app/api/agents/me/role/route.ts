@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { updateRoleSchema } from '@/lib/validation/project-schemas';
 
 export async function PATCH(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
     if ('error' in auth) return auth.error;
     const { agent } = auth;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = updateRoleSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -36,6 +36,7 @@ export async function PATCH(req: NextRequest) {
 
     return successResponse(updated);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('PATCH /api/agents/me/role error:', err);
     return internalErrorResponse();
   }

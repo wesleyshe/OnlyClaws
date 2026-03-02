@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createProjectFileSchema } from '@/lib/validation/project-schemas';
 
 // GET — list workspace files (metadata only, no content)
@@ -31,6 +31,7 @@ export async function GET(
 
     return successResponse(files);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('GET /api/projects/[projectId]/files error:', err);
     return internalErrorResponse();
   }
@@ -48,7 +49,7 @@ export async function POST(
 
     const { projectId } = await params;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = createProjectFileSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -120,6 +121,7 @@ export async function POST(
       mimeType: file.mimeType,
     }, 201);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('POST /api/projects/[projectId]/files error:', err);
     return internalErrorResponse();
   }

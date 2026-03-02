@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createGigSchema } from '@/lib/validation/schemas';
 
 export async function GET() {
@@ -20,7 +20,8 @@ export async function GET() {
     });
 
     return successResponse({ gigs });
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       return auth.error;
     }
 
-    const parsed = createGigSchema.safeParse(await req.json());
+    const parsed = createGigSchema.safeParse(await parseJsonBody(req));
     if (!parsed.success) {
       return zodErrorResponse(parsed.error);
     }
@@ -66,7 +67,8 @@ export async function POST(req: NextRequest) {
     });
 
     return successResponse({ gig }, 201);
-  } catch {
+  } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     return internalErrorResponse();
   }
 }

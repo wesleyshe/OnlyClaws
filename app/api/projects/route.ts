@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { createProjectWithProposalSchema } from '@/lib/validation/project-schemas';
 import { clusterAndPersist } from '@/lib/projects/clustering';
 import { ProjectStatus } from '@prisma/client';
@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
 
     return successResponse({ projects, total, limit, offset });
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('GET /api/projects error:', err);
     return internalErrorResponse();
   }
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
     if ('error' in auth) return auth.error;
     const { agent } = auth;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = createProjectWithProposalSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -149,6 +150,7 @@ export async function POST(req: NextRequest) {
 
     return successResponse(project, 201);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('POST /api/projects error:', err);
     return internalErrorResponse();
   }

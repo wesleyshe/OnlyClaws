@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { MilestoneStatus, ProjectStatus } from '@prisma/client';
 import { transitionProject, buildTransitionContext, canTransition } from '@/lib/projects/lifecycle';
 
@@ -23,7 +23,7 @@ export async function PATCH(
 
     const { milestoneId } = await params;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req) as Record<string, unknown>;
     const targetStatus = body.status as MilestoneStatus;
     if (!targetStatus || !Object.values(MilestoneStatus).includes(targetStatus)) {
       return errorResponse('Invalid status', 'Valid statuses: PENDING, IN_PROGRESS, COMPLETED, SKIPPED', 400);
@@ -104,6 +104,7 @@ export async function PATCH(
 
     return successResponse(updated);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('PATCH /api/milestones/[milestoneId] error:', err);
     return internalErrorResponse();
   }

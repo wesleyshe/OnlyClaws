@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 
 // Bump this string whenever skill.md, heartbeat.md, or skill.json changes.
@@ -27,4 +27,23 @@ export function zodErrorResponse(error: ZodError) {
 
 export function internalErrorResponse() {
   return errorResponse('Internal server error', 'Try again later or contact support', 500);
+}
+
+export async function parseJsonBody(req: NextRequest): Promise<unknown> {
+  try {
+    return await req.json();
+  } catch {
+    throw new JsonParseError();
+  }
+}
+
+export class JsonParseError extends Error {
+  constructor() {
+    super('Invalid JSON body');
+    this.name = 'JsonParseError';
+  }
+
+  toResponse() {
+    return errorResponse('Invalid JSON', 'Send a valid JSON body with Content-Type: application/json', 400);
+  }
 }

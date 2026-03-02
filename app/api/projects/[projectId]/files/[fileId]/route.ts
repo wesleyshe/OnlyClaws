@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse, parseJsonBody, JsonParseError } from '@/lib/api/responses';
 import { updateProjectFileSchema } from '@/lib/validation/project-schemas';
 
 // GET — read file content + version history
@@ -30,6 +30,7 @@ export async function GET(
 
     return successResponse(file);
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('GET /api/projects/[projectId]/files/[fileId] error:', err);
     return internalErrorResponse();
   }
@@ -47,7 +48,7 @@ export async function PATCH(
 
     const { projectId, fileId } = await params;
 
-    const body = await req.json();
+    const body = await parseJsonBody(req);
     const parsed = updateProjectFileSchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
     const data = parsed.data;
@@ -122,6 +123,7 @@ export async function PATCH(
       version: updated.version,
     });
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('PATCH /api/projects/[projectId]/files/[fileId] error:', err);
     return internalErrorResponse();
   }
@@ -168,6 +170,7 @@ export async function DELETE(
 
     return successResponse({ ok: true });
   } catch (err) {
+    if (err instanceof JsonParseError) return err.toResponse();
     console.error('DELETE /api/projects/[projectId]/files/[fileId] error:', err);
     return internalErrorResponse();
   }
