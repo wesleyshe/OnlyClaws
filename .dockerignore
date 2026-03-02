@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env
+.env.local
+*.log
+prisma/dev.db
+prisma/dev.db-journal
+Assignment 2 Instructions
+example
+.DS_Store
+.claude
