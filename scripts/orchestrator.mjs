@@ -4,7 +4,9 @@
  * Runs a staggered heartbeat loop for all claimed agents.
  * Each agent cycles through the decision priority chain:
  *   1. Evaluate pending proposals
- *   2. Work on active tasks
+ *   1.5. Join open projects
+ *   1.75. Advance project lifecycle (status transitions + milestone creation)
+ *   2. Work on active tasks (create tasks for empty milestones)
  *   3. Submit deliverables
  *   4. Social maintenance (posts)
  *   5. Propose new projects (if idle)
@@ -13,9 +15,20 @@
  * Usage:
  *   node scripts/orchestrator.mjs
  *
+ * Prerequisites:
+ *   npm run seed && npm run seed:agents  (creates agent-api-keys.json)
+ *
  * Environment:
  *   APP_URL - Base URL of the OnlyClaw server (default: http://localhost:3000)
  */
+
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const API_KEYS_PATH = path.join(__dirname, 'agent-api-keys.json');
 
 const BASE_URL = process.env.APP_URL || 'http://localhost:3000';
 const STAGGER_MS = 60_000; // 1 minute between agent starts
@@ -87,6 +100,77 @@ async function runDecisionCycle(agent, agentState, runId) {
     }
   }
 
+  // Priority 1.5: Join open projects proposed by other agents
+  try {
+    const browseResult = await api('GET', '/api/projects?status=PROPOSED&limit=5', agent.apiKey);
+    const openProjects = browseResult?.projects || [];
+    for (const project of openProjects) {
+      const isMember = project.members?.some(m => m.agent?.id === agent.id);
+      if (project.proposer?.id === agent.id || isMember) continue;
+      try {
+        await api('POST', `/api/projects/${project.id}/join`, agent.apiKey);
+        actions.push({ type: 'project_joined', targetId: project.id, detail: project.title });
+        console.log(`  [${agent.name}] Joined project "${project.title}"`);
+        break; // Join at most 1 per cycle
+      } catch {
+        // 409 = full or already member, skip
+      }
+    }
+  } catch {
+    // Project browsing is best-effort
+  }
+
+  // Priority 1.75: Advance project lifecycle (status transitions + milestone creation)
+  if (agentState.activeProjects) {
+    for (const membership of agentState.activeProjects) {
+      const project = membership.project;
+
+      // PROPOSED → EVALUATING (needs ≥1 member, which the proposer satisfies)
+      if (project.status === 'PROPOSED') {
+        try {
+          await api('PATCH', `/api/projects/${project.id}/status`, agent.apiKey, {
+            targetStatus: 'EVALUATING',
+          });
+          actions.push({ type: 'status_transition', targetId: project.id, detail: 'PROPOSED→EVALUATING' });
+          console.log(`  [${agent.name}] Project "${project.title}" → EVALUATING`);
+        } catch { /* transition not yet valid */ }
+      }
+
+      // EVALUATING → PLANNED (needs majority APPROVE verdicts)
+      if (project.status === 'EVALUATING') {
+        try {
+          await api('PATCH', `/api/projects/${project.id}/status`, agent.apiKey, {
+            targetStatus: 'PLANNED',
+          });
+          actions.push({ type: 'status_transition', targetId: project.id, detail: 'EVALUATING→PLANNED' });
+          console.log(`  [${agent.name}] Project "${project.title}" → PLANNED`);
+        } catch { /* not enough approvals yet */ }
+      }
+
+      // PLANNED: create a milestone if none exist, then try → ACTIVE
+      if (project.status === 'PLANNED') {
+        if (!project.milestones || project.milestones.length === 0) {
+          try {
+            await api('POST', `/api/projects/${project.id}/milestones`, agent.apiKey, {
+              title: `Core Implementation: ${project.title}`,
+              description: 'Primary milestone covering core deliverables',
+              position: 1,
+            });
+            actions.push({ type: 'milestone_created', targetId: project.id, detail: 'Created initial milestone' });
+            console.log(`  [${agent.name}] Created milestone for "${project.title}"`);
+          } catch { /* already has milestones or error */ }
+        }
+        try {
+          await api('PATCH', `/api/projects/${project.id}/status`, agent.apiKey, {
+            targetStatus: 'ACTIVE',
+          });
+          actions.push({ type: 'status_transition', targetId: project.id, detail: 'PLANNED→ACTIVE' });
+          console.log(`  [${agent.name}] Project "${project.title}" → ACTIVE`);
+        } catch { /* needs milestones first */ }
+      }
+    }
+  }
+
   // Priority 2: Work on active tasks
   if (agentState.activeProjects) {
     let tasksCompletedThisCycle = 0;
@@ -97,6 +181,22 @@ async function runDecisionCycle(agent, agentState, runId) {
 
       for (const milestone of (project.milestones || [])) {
         if (tasksCompletedThisCycle >= 3) break;
+
+        // Create a task if milestone has none (required for work to happen)
+        if ((milestone.tasks || []).length === 0 && milestone.status !== 'COMPLETED' && milestone.status !== 'SKIPPED') {
+          try {
+            await api('POST', `/api/milestones/${milestone.id}/tasks`, agent.apiKey, {
+              title: `Execute: ${milestone.title}`,
+              description: `Work toward completing milestone: ${milestone.title}`,
+            });
+            console.log(`  [${agent.name}] Created task for milestone "${milestone.title}"`);
+            // Task will be picked up in the next cycle
+            continue;
+          } catch {
+            // Task creation failed — skip this milestone
+          }
+        }
+
         for (const task of (milestone.tasks || [])) {
           if (tasksCompletedThisCycle >= 3) break;
           if (task.status !== 'TODO' && task.status !== 'IN_PROGRESS') continue;
@@ -334,19 +434,41 @@ async function runAgentLoop(agent) {
 async function main() {
   console.log(`[orchestrator] Starting with base URL: ${BASE_URL}`);
 
-  // Fetch all claimed agents
+  // Load API keys from state file (created by npm run seed:agents)
+  let keyMap = new Map();
+  try {
+    const raw = await readFile(API_KEYS_PATH, 'utf8');
+    const state = JSON.parse(raw);
+    if (Array.isArray(state.agents)) {
+      keyMap = new Map(state.agents.map(a => [a.name, a.apiKey]));
+    }
+  } catch (err) {
+    console.error(`[orchestrator] Failed to load API keys from ${API_KEYS_PATH}: ${err.message}`);
+    console.error('[orchestrator] Run `npm run seed:agents` first to create the keys file.');
+    process.exit(1);
+  }
+
+  console.log(`[orchestrator] Loaded ${keyMap.size} API key(s) from state file`);
+
+  // Fetch all agents from the platform
   let agents;
   try {
-    const res = await fetch(`${BASE_URL}/api/agents`);
+    const res = await fetch(`${BASE_URL}/api/agents?limit=50`);
     const data = await res.json();
-    agents = data.data || [];
+    agents = data.data?.agents || [];
   } catch (err) {
     console.error(`[orchestrator] Failed to fetch agents: ${err.message}`);
     process.exit(1);
   }
 
+  // Filter for CLAIMED agents and merge API keys
+  agents = agents
+    .filter(a => a.claimStatus === 'CLAIMED')
+    .map(a => ({ ...a, apiKey: keyMap.get(a.name) }))
+    .filter(a => a.apiKey);
+
   if (agents.length === 0) {
-    console.error('[orchestrator] No agents found. Run seed script first.');
+    console.error('[orchestrator] No claimed agents with API keys found. Run seed script first.');
     process.exit(1);
   }
 
