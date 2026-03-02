@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAgent } from '@/lib/api/auth';
-import { successResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
+import { successResponse, errorResponse, zodErrorResponse, internalErrorResponse } from '@/lib/api/responses';
 import { updateMemorySchema } from '@/lib/validation/project-schemas';
 
 export async function PUT(req: NextRequest) {
@@ -10,7 +10,13 @@ export async function PUT(req: NextRequest) {
     if ('error' in auth) return auth.error;
     const { agent } = auth;
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid JSON', 'Request body must be valid JSON: { "digest": "your memory text" }', 400);
+    }
+
     const parsed = updateMemorySchema.safeParse(body);
     if (!parsed.success) return zodErrorResponse(parsed.error);
 
