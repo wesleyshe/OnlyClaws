@@ -6,7 +6,7 @@ import { getIdleStatus } from '@/lib/agents/availability';
 import { getProposalQuota, updateIdleState } from '@/lib/agents/idle';
 import { applyDecayToAgent } from '@/lib/agents/skills';
 
-const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 async function getNextCycleNumber(agentId: string): Promise<number> {
   const lastRun = await db.heartbeatRun.findFirst({
