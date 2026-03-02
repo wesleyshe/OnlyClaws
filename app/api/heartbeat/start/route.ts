@@ -73,9 +73,11 @@ export async function POST(req: NextRequest) {
     // --- Apply skill decay ---
     await applyDecayToAgent(agent.id);
 
+    // --- Re-read agent after mutations so idle/protocol checks use fresh data ---
+    const freshAgent = await db.agent.findUnique({ where: { id: agent.id } });
+
     // --- Bundle state ---
-    const [freshAgent, activeProjects, pendingEvaluations, idle, proposalQuota] = await Promise.all([
-      db.agent.findUnique({ where: { id: agent.id } }),
+    const [activeProjects, pendingEvaluations, idle, proposalQuota] = await Promise.all([
       db.projectMember.findMany({
         where: {
           agentId: agent.id,
@@ -119,12 +121,12 @@ export async function POST(req: NextRequest) {
         },
         take: 10,
       }),
-      getIdleStatus(agent),
+      getIdleStatus(freshAgent!),
       getProposalQuota(agent.id),
     ]);
 
     const baseUrl = getBaseUrl();
-    const needsRefresh = agent.protocolVersion !== PROTOCOL_VERSION;
+    const needsRefresh = freshAgent!.protocolVersion !== PROTOCOL_VERSION;
 
     return successResponse({
       runId: run.id,
